@@ -1,0 +1,744 @@
+# Markov Algorithm simulator.
+# Developed by Leonardo Mesquita in 2007
+
+# This file is Public Domain
+
+# This program simulates Markov Algorithms, which proves that Whitespace is Turing-complete.
+
+# The input format for this program is (in BNF):
+
+# input ::= SET_OF_RULES INPUT_STRING
+# SET_OF_RULES ::= SIZE RULE*
+# RULE ::= PATTERN REPLACEMENT TERMINAL
+# PATTERN ::= STRING
+# REPLACEMENT ::= STRING
+# TERMINAL ::= <integer>
+# INPUT_STRING ::= STRING
+# STRING ::= SIZE <character>*
+# SIZE ::= <integer>
+
+# The way to feed integers and chars to the program may depend on the Whitespace interpreter being used.
+# In the used version, all <integers> had to be followed by a line break.
+
+# strings are represented as a list of integers, where the first integer is the size.
+# this is so there is no limitation to the input alphabet.
+# for simplicity, we'll treat the content of the string as "chars" instead of integers
+
+# rules are stored sequentially as nextRule(ptr, 0 in the end), pattern(string),replacement(string),terminal(num)
+
+   push 0
+   push 1000
+   call readRules
+   store
+   push 0
+   retrieve
+   # reads the input
+   call readStr
+   discard
+
+main_noTerminal:
+   # current rule
+   push 1
+   push 1000
+   store
+   
+mainLoop:
+   push 1
+   retrieve
+   retrieve
+   jz noRule
+
+   push 0
+   retrieve
+   push 1
+   retrieve
+   call getPattern
+   push 1
+   retrieve
+   call getReplacement
+   call checkRule
+   jz main_noMatch
+
+   # The code below is for debugging purposes. If you wish to see the machine working, uncomment the following lines:
+   # push 0
+   # retrieve
+   # call printStr
+   # call newLine
+
+   push 1
+   retrieve
+   call isTerminal
+   jz main_noTerminal
+   jump main_end
+
+main_noMatch:
+   push 1
+   dup
+   retrieve
+   retrieve
+   store
+   jump mainLoop
+
+main_end:
+   push 0
+   retrieve
+   call printStr
+   exit
+
+
+# Gets rule pattern
+# param:
+#    ptr - pointer to rule
+# return: pointer to pattern
+getPattern:
+   push 1
+   add
+   ret
+
+# Gets rule replacement
+# param:
+#    ptr - pointer to rule
+# return: pointer to pattern
+getReplacement:
+   push 1
+   add
+   call skipString
+   ret
+
+# Checks if rule is terminal
+# param:
+#    ptr - pointer to rule
+# return: 0 if non-terminal, 1 if terminal
+isTerminal:
+   push 1
+   add
+   call skipString
+   call skipString
+   retrieve   
+   ret
+
+noRule:
+   push 69
+   outchar
+   push 82
+   outchar
+   push 82
+   outchar
+   push 79
+   outchar
+   push 82
+   outchar
+   push 58
+   outchar
+   push 32
+   outchar
+   push 78
+   outchar
+   push 111
+   outchar
+   push 32
+   outchar
+   push 109
+   outchar
+   push 97
+   outchar
+   push 116
+   outchar
+   push 99
+   outchar
+   push 104
+   outchar
+   push 105
+   outchar
+   push 110
+   outchar
+   push 103
+   outchar
+   push 32
+   outchar
+   push 114
+   outchar
+   push 117
+   outchar
+   push 108
+   outchar
+   push 101
+   outchar
+   push 10
+   outchar
+   exit
+
+newLine:
+   push 10
+   outchar
+   ret
+
+
+# Reads rules, first reading the number of rules, then reading rule by rule
+# params:
+#    ptr - pointer to the position on the heap where the rules are to be stored
+# return: pointer to the position right after the last read rule
+readRules:
+   push 700
+   readnum
+
+readRules_loop:
+   push 700
+   retrieve
+   jz readRules_end
+
+   dup
+   dup
+   call readRule
+   store
+   retrieve
+
+   push 700
+   call dec
+   jump readRules_loop
+
+readRules_end:
+   dup
+   push 0
+   store
+   push 1
+   add
+   ret
+
+
+   
+
+# Reads a rule, consisting of two strings and a 0/1 number
+# params:
+#    ptr - pointer to the position on the heap where the rule is to be stored
+# return: pointer to the position right after the read rule
+readRule:
+   dup
+   # stores zero just to create space for the "next rule" pointer
+   push 0
+   store
+   push 1
+   add
+   call readStr
+   call readStr
+   dup
+   readnum
+   push 1
+   add
+   ret
+   
+
+# Skips over a string
+# params:
+#    str - pointer to the string
+# return: pointer to the first position after the string
+skipString:
+   dup
+   retrieve
+   add
+   push 1
+   add
+   ret
+
+# Checks whether a rule applies, making the necessary changes to the input
+# params:
+#   input - the input string
+#   pattern - the string pattern to match
+#   rpl - the replacement string, if a match is found
+# return: 1 if the rule applied, 0 if not
+checkRule:
+   push 602
+   swap
+   store
+   push 601
+   swap
+   store
+   push 600
+   swap
+   store
+
+   # test match
+   push 600
+   retrieve
+   push 601
+   retrieve
+   call findSubstring
+   dup
+   jz checkRule_end
+   
+   # replace match
+   push 600
+   retrieve
+   swap
+   push 601
+   retrieve
+   retrieve
+   push 602
+   retrieve
+   call replaceStr
+   push 1
+checkRule_end:
+   ret
+
+# Replaces a section of a string with another string
+# NOTE: it may overwrite subsequent memory adresses
+# No error checking if removed part goes beyond string limits
+# params:
+#    str - original string
+#    pos - position where the replace starts (1-indexed)
+#    len - size of the part that is to be replaced (can be different than the size of the replacement string)
+#    rpl - replacement string
+replaceStr:
+   push 503
+   swap
+   store
+   push 502
+   swap
+   store
+   push 501
+   swap
+   store
+   push 500
+   swap
+   store
+   
+   # first, we need to move the trailing part to the new position
+   # eventually we must compute the new size of the string
+   # first, find the trail
+
+   # start of trail
+   push 504 
+   push 501
+   retrieve
+   push 502
+   retrieve
+   add
+   store
+
+   # size of trail
+   push 505
+   push 500
+   retrieve
+   retrieve
+   push 504
+   retrieve
+   sub
+   push 1
+   add
+   store
+
+   # new position of trail
+   push 506
+   push 503
+   retrieve
+   retrieve
+   push 502
+   retrieve
+   sub
+   dup
+   # stores the size offset
+   push 507
+   swap
+   store
+   push 504
+   retrieve
+   add
+   store
+
+   # Now we move the trail
+   push 500   
+   retrieve
+   dup
+   push 504
+   retrieve
+   add
+   swap
+   push 506
+   retrieve
+   add
+   push 505
+   retrieve
+   call copyStr
+
+   # Now we copy the replacement to the string
+   push 503
+   retrieve
+   push 1
+   add
+   push 500
+   retrieve
+   push 501
+   retrieve
+   add
+   push 503
+   retrieve
+   retrieve
+   call copyStr
+
+   # We still must fix the original string size
+   push 500
+   retrieve
+   dup
+   retrieve
+   push 507
+   retrieve
+   add
+   store
+
+   ret
+
+
+# Prints the contents of a string
+# params:
+#    str - the string to be printed
+printStr:
+   push 400
+   swap
+   store
+   push 401
+   push 400
+   retrieve
+   retrieve
+   store
+   push 400
+   call inc
+printStr_loop:
+   push 401
+   retrieve
+   jz printStr_end
+   push 400
+   retrieve
+   retrieve
+   outchar
+   push 400
+   call inc
+   push 401
+   call dec
+   jump printStr_loop
+printStr_end:
+   ret
+
+# Copies content of src to dst, supporting overlap.
+# params:
+#    src - source ptr
+#    dst - destination ptr
+#    size - number of elements to copy
+copyStr:
+   push 402
+   swap
+   store
+   push 401
+   swap
+   store
+   push 400
+   swap
+   store
+   push 400
+   retrieve
+   push 401
+   retrieve
+   sub
+   # if src < dst, copy from right to left
+   jn copyStr_right
+   push 400
+   retrieve
+   push 401
+   retrieve
+   push 402
+   retrieve
+   jump leftCopyStr
+copyStr_right:
+   push 400
+   retrieve
+   push 401
+   retrieve
+   push 402
+   retrieve
+   jump rightCopyStr
+
+
+# Copies content of src to dst, from left to right
+# params:
+#    src - source ptr
+#    dst - destination ptr
+#    size - number of elements to copy
+leftCopyStr:
+   push 402
+   swap
+   store
+   push 401
+   swap
+   store
+   push 400
+   swap
+   store
+leftCopyStr_loop:
+   push 402
+   retrieve
+   jz leftCopyStr_end
+   push 401
+   retrieve
+   push 400
+   retrieve
+   retrieve
+   store
+   push 400
+   call inc
+   push 401
+   call inc
+   push 402
+   call dec
+   jump leftCopyStr_loop
+leftCopyStr_end:
+   ret
+
+# Copies content of src to dst, from right to left
+# params:
+#    src - source ptr
+#    dst - destination ptr
+#    size - number of elements to copy
+rightCopyStr:   
+   push 402
+   swap
+   store
+   push 402
+   retrieve
+   add
+   push 401
+   swap
+   store
+   push 402
+   retrieve
+   add
+   push 400
+   swap
+   store
+rightCopyStr_loop:
+   push 400
+   call dec
+   push 401
+   call dec
+   push 402
+   retrieve
+   jz rightCopyStr_end
+   push 401
+   retrieve
+   push 400
+   retrieve
+   retrieve
+   store
+   push 402
+   call dec
+   jump rightCopyStr_loop
+rightCopyStr_end:
+   ret
+  
+# Reads a string from the input   
+# params:
+#   ptr - address to store string in heap
+# return: next availabe address
+readStr:
+   dup
+   # stores ptr to start of string
+   push 300
+   swap
+   store
+   # fills first position with size
+   readnum
+   # stores number of chars to read in heap
+   push 300
+   retrieve
+   retrieve
+   push 301
+   swap
+   store
+readStr_loop:
+   # advance ptr
+   push 300
+   call inc
+   # if no more chars to read, return
+   push 301
+   retrieve
+   jz readStr_end
+   # read char at current ptr
+   push 300
+   retrieve
+   readchar
+   # decrement number of chars to read and continue
+   push 301
+   call dec
+   jump readStr_loop
+readStr_end:
+   # ptr is at the next available spot
+   push 300
+   retrieve
+   ret
+
+# Finds a substring in a string
+# params:
+#    str string to compare
+#    sub substring to find
+# return: first index of substring (0 if not found)
+findSubstring:
+   dup
+   retrieve
+   jz emptySubstring
+
+   # store parameters in heap
+   push 101
+   swap
+   store
+   push 100
+   swap
+   store
+
+   # store size of str in 102 and point to start
+   push 100
+   dup
+   retrieve
+   dup
+   retrieve
+   push 102
+   swap
+   store
+   push 1
+   add
+   store
+
+   # store size of sub in 103 and point to start
+   push 101
+   dup
+   retrieve
+   dup
+   retrieve
+   push 103
+   swap
+   store
+   push 1
+   add
+   store
+
+   push 104
+   push 1
+   store
+   
+compareLoop:
+   push 102
+   retrieve
+   jz noMatch
+   #compare next char
+   push 100
+   retrieve
+   retrieve
+   push 101
+   retrieve
+   retrieve
+   sub
+   jz matchFirst
+matchFailed:
+   push 100
+   call inc
+   push 102
+   call dec
+   push 104
+   call inc
+   jump compareLoop
+
+matchFirst:
+   push 100
+   retrieve
+   push 102
+   retrieve
+   push 101
+   retrieve
+   push 103
+   retrieve
+   call startsWith
+   jz matchFailed
+   push 104
+   retrieve
+   ret   
+
+# Useful functions
+# increments the contents of a heap var
+inc:
+   dup
+   retrieve
+   push 1
+   add
+   store
+   ret
+
+# decrements the contents of a heap var
+dec:
+   dup
+   retrieve
+   push 1
+   sub
+   store
+   ret
+
+   
+noMatch:
+   push 0
+   ret
+
+emptySubstring:
+   discard
+   discard
+   #empty substring matches at the beginning of any string
+   push 1
+   ret
+
+# Checks if a given pointer has a given prefix
+# params:
+#   ptr - pointer to the contents of a string
+#   ptrsize - the number of itens available at ptr
+#   prefix - pointer to the contents of the prefix to check
+#   prefixsize - the size of the prefix
+#   return 1 if ptr starts with prefix, 0 if not
+startsWith:
+   push 203
+   swap
+   store
+   push 202
+   swap
+   store
+   push 201
+   swap
+   store
+   push 200
+   swap
+   store
+
+startsWith_loop:
+   push 203
+   retrieve
+   jz startsWith_ok
+   push 201
+   retrieve
+   jz noMatch
+   push 200
+   retrieve
+   retrieve
+   push 202
+   retrieve
+   retrieve
+   sub
+   jz startsWith_cont
+   jump noMatch
+
+startsWith_cont:
+   push 200
+   call inc
+   push 201
+   call dec
+   push 202
+   call inc
+   push 203
+   call dec
+   jump startsWith_loop 
+
+startsWith_ok:
+   push 1
+   ret
