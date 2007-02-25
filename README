@@ -1,0 +1,13 @@
+Hello!
+
+I have developed a Markov Algorithm simulator in Whitespace.
+Since Markov Algorithms are Turing-complete, I belive this proves that
+Whitespace is also Turing-complete :-)
+I'm sending an attached zip file containing:
+   * The commented source code in "Whitespace assembly"
+   * The WS that was generated from this assebly
+   * An input file that contains a Markov Algorithm set of rules to test
+if a string containing only "a" and "b" is a palindrome.
+
+Cheers,
+Leonardo Mesquita
